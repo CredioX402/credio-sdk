@@ -199,7 +199,8 @@ function resourceUrlOf(input: RequestInfo | URL): string {
  *   import { createX402Client } from "x402-solana/client"
  *   import { withCredioFallback } from "credio-sdk"
  *
- *   const own = createX402Client({ wallet, network: "solana", rpcUrl }).fetch
+ *   const client = createX402Client({ wallet, network: "solana", rpcUrl })
+ *   const own = client.fetch.bind(client) // bind: fetch() relies on `this`
  *   const fetch = withCredioFallback(own, { agentWalletAddress: WALLET })
  *
  *   const res = await fetch("https://api.example.com/premium") // just works

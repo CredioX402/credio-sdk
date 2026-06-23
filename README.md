@@ -72,7 +72,8 @@ import { createX402Client } from "x402-solana/client"
 import { withCredioFallback } from "credio-sdk"
 
 // Your agent's normal x402 client, bound to its own wallet:
-const own = createX402Client({ wallet, network: "solana", rpcUrl }).fetch
+const client = createX402Client({ wallet, network: "solana", rpcUrl })
+const own = client.fetch.bind(client) // bind: fetch() relies on `this`
 
 // Wrap it once. Now every request just works:
 const fetch = withCredioFallback(own, { agentWalletAddress: WALLET })
