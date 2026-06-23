@@ -1,0 +1,43 @@
+{
+  "name": "credio-sdk",
+  "version": "0.1.0",
+  "description": "Credit layer for AI agents on x402 (Solana). Front USDC for your agent's x402 payments and repay on-chain — non-custodial, no API keys.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "x402",
+    "solana",
+    "ai-agents",
+    "agent-economy",
+    "usdc",
+    "credit",
+    "payments",
+    "credio"
+  ],
+  "homepage": "https://credio.cc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CredioX402/credio-sdk.git"
+  },
+  "bugs": { "url": "https://github.com/CredioX402/credio-sdk/issues" },
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}
