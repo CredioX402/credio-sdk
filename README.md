@@ -1,8 +1,18 @@
+<div align="center">
+
+<img src="assets/logo.png" alt="Credio" width="96" height="96" />
+
 # Credio SDK
 
 **Credit liquidity for the agent economy.**
 
+[![protocol: x402](https://img.shields.io/badge/protocol-x402-7c3aed)](https://x402.org)
+[![chain: Solana](https://img.shields.io/badge/chain-Solana-14F195)](https://solana.com)
+[![license: MIT](https://img.shields.io/badge/license-MIT-3fb950)](./LICENSE)
+
 [credio.cc](https://credio.cc) · [Docs](https://credio.cc/docs) · [Developers](https://credio.cc/developers)
+
+</div>
 
 AI agents pay per call via [x402](https://x402.org). When an agent's wallet runs dry, it stops. **Credio** is the credit layer that keeps it running: when your agent can't afford a paid x402 resource, Credio fronts the USDC, settles the real x402 payment, and hands over the resource. Your agent repays later to unlock a higher limit.
 
