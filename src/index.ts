@@ -169,4 +169,78 @@ export class CredioClient {
   }
 }
 
+export interface CredioFallbackOptions {
+  agentWalletAddress: string
+  baseUrl?: string
+  agentMetadata?: AgentMetadata
+  /**
+   * HTTP statuses from the inner fetch that mean "payment failed, use credit".
+   * Defaults to [402] (x402 Payment Required after the agent's own attempt).
+   */
+  fallbackStatuses?: number[]
+}
+
+function resourceUrlOf(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input
+  if (input instanceof URL) return input.toString()
+  return (input as Request).url
+}
+
+/**
+ * Wrap an existing fetch so x402 payments fall back to Credio credit
+ * AUTOMATICALLY. The agent pays from its own wallet first; if that fails
+ * (insufficient funds / 402), Credio fronts the payment and the agent repays
+ * later. No manual branching, this is the drop-in fallback.
+ *
+ * Pass an x402 client bound to the agent's own wallet as `innerFetch` so own
+ * funds are tried first (recommended). A plain `fetch` also works and simply
+ * routes every paid resource through Credio credit.
+ *
+ *   import { createX402Client } from "x402-solana/client"
+ *   import { withCredioFallback } from "credio-sdk"
+ *
+ *   const own = createX402Client({ wallet, network: "solana", rpcUrl }).fetch
+ *   const fetch = withCredioFallback(own, { agentWalletAddress: WALLET })
+ *
+ *   const res = await fetch("https://api.example.com/premium") // just works
+ *
+ * On the credit path the returned Response carries:
+ *   x-credio-paid: "credit" | "failed"
+ *   x-credio-settlement: <on-chain tx signature>
+ */
+export function withCredioFallback(
+  innerFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
+  opts: CredioFallbackOptions,
+): (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> {
+  const credio = new CredioClient({ baseUrl: opts.baseUrl })
+  const fallbackStatuses = opts.fallbackStatuses ?? [402]
+
+  return async (input, init) => {
+    // 1) Try the agent's own funds first.
+    try {
+      const res = await innerFetch(input, init)
+      if (res.ok || !fallbackStatuses.includes(res.status)) return res
+    } catch {
+      // own-wallet payment threw (e.g. no USDC) — fall through to credit.
+    }
+
+    // 2) Fall back to Credio credit (Credio fronts the x402 payment).
+    const r = await credio.payForResource({
+      agentWalletAddress: opts.agentWalletAddress,
+      resourceUrl: resourceUrlOf(input),
+      agentMetadata: opts.agentMetadata,
+    })
+
+    const body = r.success ? r.resource?.body ?? r : { error: r.error ?? "credit failed" }
+    return new Response(JSON.stringify(body), {
+      status: r.success ? r.resource?.status ?? 200 : 502,
+      headers: {
+        "content-type": "application/json",
+        "x-credio-paid": r.success ? "credit" : "failed",
+        "x-credio-settlement": r.settlementTx ?? "",
+      },
+    })
+  }
+}
+
 export default CredioClient

@@ -57,7 +57,33 @@ if (res.success) {
 }
 ```
 
-Credio pays the **provider directly** — it never sends funds to the agent. The agent receives the resource and a debt to Credio.
+Credio pays the **provider directly**, it never sends funds to the agent. The agent receives the resource and a debt to Credio.
+
+---
+
+## Automatic fallback (recommended)
+
+A credit line is only useful if it kicks in on its own. `withCredioFallback`
+wraps your agent's fetch so it pays from its **own wallet first**, and falls
+back to Credio credit **automatically** when funds run out. No manual branching.
+
+```ts
+import { createX402Client } from "x402-solana/client"
+import { withCredioFallback } from "credio-sdk"
+
+// Your agent's normal x402 client, bound to its own wallet:
+const own = createX402Client({ wallet, network: "solana", rpcUrl }).fetch
+
+// Wrap it once. Now every request just works:
+const fetch = withCredioFallback(own, { agentWalletAddress: WALLET })
+
+const res = await fetch("https://api.example.com/premium")
+// paid from own funds if available, otherwise on Credio credit
+```
+
+On the credit path the response includes `x-credio-paid: credit` and
+`x-credio-settlement: <tx>` headers. The agent repays later (below) to lift its
+limit.
 
 ---
 
